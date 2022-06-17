@@ -32,13 +32,13 @@ var fetch_url = function(url,cb) {
     });
 };
 
-app.get('/', async function(req, res){
+app.get('/api/', async function(req, res){
     console.log("Hello.");
     res.send("Hello, World!");
 });
 
 // Function to handle the root path
-app.get('/simple-proxy', async function(req, res) {
+app.get('/api/simple-proxy', async function(req, res) {
     if(req.query.fetch_url)
     {
         try
