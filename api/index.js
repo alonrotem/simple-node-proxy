@@ -5,6 +5,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+const nodemailer = require('nodemailer');
 
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
@@ -111,7 +112,36 @@ app.post('/api/send-mail/', function(request, response){
       }
   }
 
-  console.log("Sending...")
+  console.log("Sending...");
+
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: 'mastilnicata@gmail.com',
+      pass: 'nykfpkbecsamqgqg'
+    }
+  });
+  
+  const mailOptions = {
+    from: 'info@mastilnicata.com',
+    to: 'info@mastilnicata.com',
+    subject: 'Subject by nodemailer',
+    text: 'Email content by nodemailer'
+  };
+  
+  transporter.sendMail(mailOptions, function(error, info){
+    if (error) {
+   console.log(error);
+   response.send('Error: ' + error);
+    } else {
+      console.log('Email sent: ' + info.response);
+      response.send('Email sent: ' + info.response);
+      // do something useful
+    }
+  });
+
+
+  /*
     var post_data = JSON.stringify(
       {
         "personalizations": [
@@ -149,6 +179,7 @@ app.post('/api/send-mail/', function(request, response){
           console.log(e);
         });
     });*/
+    /*
     var post_req = https.request(post_options, (res) => {
       console.log('statusCode:', res.statusCode);
       console.log('headers:', res.headers);
@@ -167,7 +198,7 @@ app.post('/api/send-mail/', function(request, response){
     post_req.end();
 
     response.send("AllDone");
-
+*/
   /*
     //ES6
     sgMail
