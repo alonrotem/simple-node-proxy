@@ -7,9 +7,6 @@ const fs = require('fs');
 const path = require('path');
 const nodemailer = require('nodemailer');
 
-const sgMail = require('@sendgrid/mail');
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
 let app = express();
 app.use(cors());
 app.use(bodyParser.json())
@@ -77,11 +74,17 @@ app.post('/api/send-mail/', function(request, response){
   console.log("======================");
   console.log("Post request received!");
   const msg = {
-    to: request.body.personalizations[0].to[0].email,
-    from: request.body.from.email,
+    to: {
+      email: request.body.to.email,
+      name: request.body.to.name
+    },
+    from: {
+      email: request.body.from.email,
+      name: request.body.from.name
+    },
     subject: request.body.subject,
-    text: request.body.content[0].value,
-    html: request.body.content[0].value,
+    text: request.body.content.text,
+    html: request.body.content.html
   };
   console.log(JSON.stringify(msg));
   console.log("======================");
@@ -95,8 +98,8 @@ app.post('/api/send-mail/', function(request, response){
       if(allowed_emails)
       {
         allowed_emails.forEach((pattern) => {
-          console.log("Testing: pattern-> " + pattern + ", address-> " + msg.to)
-          if(new RegExp(pattern).test(msg.to))
+          console.log("Testing: pattern-> " + pattern + ", address-> " + msg.to.email)
+          if(new RegExp(pattern).test(msg.to.email))
           {
             console.log("Matched! This address is okay!")
             didntmatchanypattern = false;
@@ -118,15 +121,16 @@ app.post('/api/send-mail/', function(request, response){
     service: 'gmail',
     auth: {
       user: 'mastilnicata@gmail.com',
-      pass: 'nykfpkbecsamqgqg'
+      pass: process.env.gmail_app_key
     }
   });
   
   const mailOptions = {
-    from: 'info@mastilnicata.com',
-    to: 'info@mastilnicata.com',
-    subject: 'Subject by nodemailer',
-    text: 'Email content by nodemailer'
+    from: msg.from.name + "<" + msg.from.email + ">",
+    to: msg.to.name + "<" +msg.to.email + ">",
+    subject: msg.subject,
+    text: msg.text,
+    html: msg.html
   };
   
   transporter.sendMail(mailOptions, function(error, info){
