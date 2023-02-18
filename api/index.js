@@ -73,7 +73,8 @@ app.get('/api/simple-proxy', async function(req, res) {
 });
 
 app.post('/api/send-mail/', function(request, response){
-
+  console.log("======================");
+  console.log("Post request received!");
   const msg = {
     to: request.body.personalizations[0].to[0].email,
     from: request.body.from.email,
@@ -81,7 +82,9 @@ app.post('/api/send-mail/', function(request, response){
     text: request.body.content[0].value,
     html: request.body.content[0].value,
   };
-
+  console.log(JSON.stringify(msg));
+  console.log("======================");
+  
   let jsonPath = path.join(__dirname, '..', 'config', 'emails.json');
   if (fs.existsSync(jsonPath)) {
       let rawdata = fs.readFileSync(jsonPath);
