@@ -8,7 +8,9 @@ const path = require('path');
 const nodemailer = require('nodemailer');
 
 let app = express();
-app.use(cors());
+app.use(cors({
+  origin: '*'
+}));
 app.use(bodyParser.json())
 
 var fetch_url = function(url,cb) {
