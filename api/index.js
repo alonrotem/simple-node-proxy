@@ -84,7 +84,8 @@ app.post('/api/send-mail/', function(request, response){
   };
   console.log(JSON.stringify(msg));
   console.log("======================");
-  
+
+
   let jsonPath = path.join(__dirname, '..', 'config', 'emails.json');
   if (fs.existsSync(jsonPath)) {
       let rawdata = fs.readFileSync(jsonPath);
@@ -109,6 +110,65 @@ app.post('/api/send-mail/', function(request, response){
         
       }
   }
+
+  console.log("Sending...")
+    var post_data = JSON.stringify(
+      {
+        "personalizations": [
+          {"to": [{ "email": msg.to }]}],
+          "from": { "email": msg.from },
+          "subject": msg.subject,
+          "content": [{
+            "type": "text/plain",
+            "value": msg.text 
+          }]
+        }
+      );
+  
+    // An object of options to indicate where to post to
+    var post_options = {
+        host: 'api.sendgrid.com',
+        port: '443',
+        path: '/v3/mail/send',
+        method: 'POST',
+        headers: {
+            'Authorization': 'Bearer ' + process.env.SENDGRID_API_KEY,
+            'Content-Type': 'application/json',
+            'Content-Length': Buffer.byteLength(post_data)
+        }
+    };
+  
+    // Set up the request
+    /*
+    var post_req = https.request(post_options, function(res) {
+        res.setEncoding('utf8');
+        res.on('data', function (chunk) {
+            console.log('Response: ' + chunk);
+        });
+        res.on('error', function (e) {
+          console.log(e);
+        });
+    });*/
+    var post_req = https.request(post_options, (res) => {
+      console.log('statusCode:', res.statusCode);
+      console.log('headers:', res.headers);
+    
+      res.on('data', (d) => {
+        process.stdout.write(d);
+      });
+    });
+    
+    post_req.on('error', (e) => {
+      console.error(e);
+    });
+  
+    // post the data
+    post_req.write(post_data);
+    post_req.end();
+
+    response.send("AllDone");
+
+  /*
     //ES6
     sgMail
       .send(msg)
@@ -133,6 +193,7 @@ app.post('/api/send-mail/', function(request, response){
     })();    
     //----------
     response.send(request.body);
+    */
 });
 
 let port=8083;
