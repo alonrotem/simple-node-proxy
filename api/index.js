@@ -6,6 +6,7 @@ const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
 const nodemailer = require('nodemailer');
+const email_validation = require("node-email-validation");
 
 let app = express();
 app.use(cors({
@@ -72,52 +73,47 @@ app.get('/api/simple-proxy', async function(req, res) {
     }
 });
 
-app.post('/api/send-mail/', function(request, response){
-  console.log("======================");
-  console.log("Post request received!");
-  const msg = {
-    to: {
-      email: request.body.to.email,
-      name: request.body.to.name
-    },
+app.post('/api/contact-form', function(request, response){
+  /*
+  Body structure:
+  {
     from: {
-      email: request.body.from.email,
-      name: request.body.from.name
+      email: "alrotem@gmail.com",
+      name: "Alon Rotem"
     },
-    subject: request.body.subject,
-    text: request.body.content.text,
-    html: request.body.content.html
-  };
-  console.log(JSON.stringify(msg));
-  console.log("======================");
-
-
-  let jsonPath = path.join(__dirname, '..', 'config', 'emails.json');
-  if (fs.existsSync(jsonPath)) {
-      let rawdata = fs.readFileSync(jsonPath);
-      let allowed_emails = JSON.parse(rawdata);
-      let didntmatchanypattern = true;
-      if(allowed_emails)
-      {
-        allowed_emails.forEach((pattern) => {
-          console.log("Testing: pattern-> " + pattern + ", address-> " + msg.to.email)
-          if(new RegExp(pattern).test(msg.to.email))
-          {
-            console.log("Matched! This address is okay!")
-            didntmatchanypattern = false;
-          }
-        });
-        if(didntmatchanypattern)
-        {
-          console.log("Didn't match any allowed pattern!");
-          response.status(401).json('Unauthorized email address');
-          return;
-        }
-        
-      }
+    subject: "Just testing",
+    body: "Just testing"
   }
-
+  */
   console.log("Sending...");
+  
+  let from_address = "contact-form@mastilnicata.com";
+  let from_name = request.body.from.name;
+  if(request.body.from && request.body.from.email && email_validation.is_email_valid(request.body.from.email))
+  {
+    from_address = request.body.from.email;
+  }
+  let subject = request.body.subject;
+  let body = request.body.body;
+
+    let body_html = "<p>\
+      <hr/> \
+      <h2>Contact form</h2>  \
+      <strong>From: </strong>"+ from_name + "&lt;" + request.body.from.email + "&gt;"+"<br/> \
+      <strong>Subject: </strong>"+ subject +"<br/> \
+      <p> \
+      " + body +" \
+      </p> \
+    </p>"
+
+    let body_text = "=====================================================\
+      Contact form \
+      From: "+ from_name + "<" + request.body.from.email + "> \
+      Subject: "+ subject + " \
+       \
+      " + body +" \
+    </p>"
+
 
   const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -128,109 +124,24 @@ app.post('/api/send-mail/', function(request, response){
   });
   
   const mailOptions = {
-    from: msg.from.name + "<" + msg.from.email + ">",
-    to: msg.to.name + "<" +msg.to.email + ">",
-    subject: msg.subject,
-    text: msg.text,
-    html: msg.html
+    from: "contact-form@mastilnicata.com",
+    replyTo: from_name + "<" + from_address + ">",
+    to: "mastilnicata@gmail.com",
+    subject: "Contact form:" + subject,
+    text: body_text,
+    html: body_html
   };
   
   transporter.sendMail(mailOptions, function(error, info){
     if (error) {
-   console.log(error);
-   response.send('Error: ' + error);
-    } else {
+      console.log(error);
+      response.send(JSON.stringify( { 'sent_error' : error } ));
+    } 
+    else {
       console.log('Email sent: ' + info.response);
-      response.send('Email sent: ' + info.response);
-      // do something useful
+      response.send(JSON.stringify( { 'sent_info' : info.response, 'message_info': mailOptions } ));
     }
   });
-
-
-  /*
-    var post_data = JSON.stringify(
-      {
-        "personalizations": [
-          {"to": [{ "email": msg.to }]}],
-          "from": { "email": msg.from },
-          "subject": msg.subject,
-          "content": [{
-            "type": "text/plain",
-            "value": msg.text 
-          }]
-        }
-      );
-  
-    // An object of options to indicate where to post to
-    var post_options = {
-        host: 'api.sendgrid.com',
-        port: '443',
-        path: '/v3/mail/send',
-        method: 'POST',
-        headers: {
-            'Authorization': 'Bearer ' + process.env.SENDGRID_API_KEY,
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(post_data)
-        }
-    };
-  
-    // Set up the request
-    /*
-    var post_req = https.request(post_options, function(res) {
-        res.setEncoding('utf8');
-        res.on('data', function (chunk) {
-            console.log('Response: ' + chunk);
-        });
-        res.on('error', function (e) {
-          console.log(e);
-        });
-    });*/
-    /*
-    var post_req = https.request(post_options, (res) => {
-      console.log('statusCode:', res.statusCode);
-      console.log('headers:', res.headers);
-    
-      res.on('data', (d) => {
-        process.stdout.write(d);
-      });
-    });
-    
-    post_req.on('error', (e) => {
-      console.error(e);
-    });
-  
-    // post the data
-    post_req.write(post_data);
-    post_req.end();
-
-    response.send("AllDone");
-*/
-  /*
-    //ES6
-    sgMail
-      .send(msg)
-      .then(() => {}, error => {
-        console.error(error);
-    
-        if (error.response) {
-          console.error(error.response.body)
-        }
-      });
-    //ES8
-    (async () => {
-      try {
-        await sgMail.send(msg);
-      } catch (error) {
-        console.error(error);
-    
-        if (error.response) {
-          console.error(error.response.body)
-        }
-      }
-    })();    
-    //----------
-    response.send(request.body);
-    */
 });
 
 let port=8083;
