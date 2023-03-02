@@ -95,6 +95,9 @@ app.post('/api/contact-form', function(request, response){
   }
   let subject = request.body.subject;
   let body = request.body.body;
+  // console.log("===BODY==============");
+  // console.log(body.replace(/\n/g, "<br/>"));
+  // console.log("===/BODY==============");
 
     let body_html = "<p>\
       <hr/> \
@@ -102,7 +105,7 @@ app.post('/api/contact-form', function(request, response){
       <strong>From: </strong>"+ from_name + "&lt;" + request.body.from.email + "&gt;"+"<br/> \
       <strong>Subject: </strong>"+ subject +"<br/> \
       <p> \
-      " + body +" \
+      " + body.replace(/\n/g, "<br/>") +" \
       </p> \
     </p>"
 
@@ -111,7 +114,7 @@ app.post('/api/contact-form', function(request, response){
       From: "+ from_name + "<" + request.body.from.email + "> \
       Subject: "+ subject + " \
        \
-      " + body +" \
+      " + body.replace(/\n/g, "\\n") +" \
     </p>"
 
 
@@ -127,7 +130,7 @@ app.post('/api/contact-form', function(request, response){
     from: "contact-form@mastilnicata.com",
     replyTo: from_name + "<" + from_address + ">",
     to: "mastilnicata@gmail.com",
-    subject: "Contact form:" + subject,
+    subject: "Contact form: " + subject,
     text: body_text,
     html: body_html
   };
